@@ -11,5 +11,8 @@ export interface AccountResponse {
     updated_at: string;
     created_at: string;
     role_id: number;
+    automatic_analysis_cycle?: number | null;
+    target_period?: number | null;
+    target_amount?: number | null;
 }
 

@@ -10,6 +10,16 @@ export default function MyPage() {
     const [account, setAccount] = useState<AccountResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        nickname: "",
+        profile_image: "",
+        phone_number: "",
+        automatic_analysis_cycle: "",
+        target_period: "",
+        target_amount: "",
+    });
+    const [submitting, setSubmitting] = useState(false);
     const { isLoggedIn } = useAuth();
     const router = useRouter();
 
@@ -65,6 +75,15 @@ export default function MyPage() {
 
                 const data: AccountResponse = await response.json();
                 setAccount(data);
+                // 편집 폼 초기화
+                setEditForm({
+                    nickname: data.nickname || "",
+                    profile_image: data.profile_image || "",
+                    phone_number: data.phone_number || "",
+                    automatic_analysis_cycle: data.automatic_analysis_cycle?.toString() || "",
+                    target_period: data.target_period?.toString() || "",
+                    target_amount: data.target_amount?.toString() || "",
+                });
             } catch (err) {
                 console.error("[MyPage] Failed to fetch account:", err);
                 setError(
@@ -79,6 +98,87 @@ export default function MyPage() {
 
         fetchAccountInfo();
     }, [isLoggedIn, router]);
+
+    const handleEdit = () => {
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        if (account) {
+            setEditForm({
+                nickname: account.nickname || "",
+                profile_image: account.profile_image || "",
+                phone_number: account.phone_number || "",
+                automatic_analysis_cycle: account.automatic_analysis_cycle?.toString() || "",
+                target_period: account.target_period?.toString() || "",
+                target_amount: account.target_amount?.toString() || "",
+            });
+        }
+        setIsEditing(false);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!account) return;
+
+        try {
+            setSubmitting(true);
+            setError(null);
+
+            const payload: {
+                nickname: string | null;
+                profile_image: string | null;
+                phone_number: string | null;
+                automatic_analysis_cycle?: number;
+                target_period?: number;
+                target_amount?: number;
+            } = {
+                nickname: editForm.nickname || null,
+                profile_image: editForm.profile_image || null,
+                phone_number: editForm.phone_number || null,
+            };
+
+            // 편집 모드에서만 보이는 필드들
+            if (editForm.automatic_analysis_cycle) {
+                payload.automatic_analysis_cycle = parseInt(editForm.automatic_analysis_cycle);
+            }
+            if (editForm.target_period) {
+                payload.target_period = parseInt(editForm.target_period);
+            }
+            if (editForm.target_amount) {
+                payload.target_amount = parseInt(editForm.target_amount);
+            }
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/account/${account.session_id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: "include",
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("계정 정보 수정에 실패했습니다.");
+            }
+
+            const updatedData: AccountResponse = await response.json();
+            setAccount(updatedData);
+            setIsEditing(false);
+        } catch (err) {
+            console.error("[MyPage] Failed to update account:", err);
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "계정 정보 수정에 실패했습니다."
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -121,6 +221,35 @@ export default function MyPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-black py-8 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
                 <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg overflow-hidden">
+                    {/* 수정 버튼 */}
+                    <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-end">
+                        {!isEditing ? (
+                            <button
+                                onClick={handleEdit}
+                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                            >
+                                수정
+                            </button>
+                        ) : (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleCancel}
+                                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
+                                    disabled={submitting}
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    onClick={handleSubmit}
+                                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors disabled:bg-gray-400"
+                                    disabled={submitting}
+                                >
+                                    {submitting ? "저장 중..." : "저장"}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     {/* 프로필 헤더 */}
                     <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-8">
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
@@ -156,62 +285,131 @@ export default function MyPage() {
                             계정 정보
                         </h2>
 
-                        <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
-                                    OAuth 타입
+                        <form onSubmit={handleSubmit}>
+                            <div className="space-y-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                        OAuth 타입
+                                    </div>
+                                    <div className="flex-1 text-black dark:text-zinc-50">
+                                        <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+                                            {account.oauth_type}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex-1 text-black dark:text-zinc-50">
-                                    <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
-                                        {account.oauth_type}
-                                    </span>
-                                </div>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
-                                    OAuth ID
+                                <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                        OAuth ID
+                                    </div>
+                                    <div className="flex-1 text-black dark:text-zinc-50 font-mono text-sm">
+                                        {account.oauth_id}
+                                    </div>
                                 </div>
-                                <div className="flex-1 text-black dark:text-zinc-50 font-mono text-sm">
-                                    {account.oauth_id}
-                                </div>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
-                                    닉네임
+                                <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                        닉네임
+                                    </div>
+                                    <div className="flex-1">
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={editForm.nickname}
+                                                onChange={(e) =>
+                                                    setEditForm({ ...editForm, nickname: e.target.value })
+                                                }
+                                                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-black dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        ) : (
+                                            <div className="text-black dark:text-zinc-50">
+                                                {account.nickname || "-"}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex-1 text-black dark:text-zinc-50">
-                                    {account.nickname || "-"}
-                                </div>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
-                                    이름
+                                <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                        이름
+                                    </div>
+                                    <div className="flex-1 text-black dark:text-zinc-50">
+                                        {account.name || "-"}
+                                    </div>
                                 </div>
-                                <div className="flex-1 text-black dark:text-zinc-50">
-                                    {account.name || "-"}
-                                </div>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
-                                    이메일
+                                <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                        이메일
+                                    </div>
+                                    <div className="flex-1 text-black dark:text-zinc-50">
+                                        {account.email || "-"}
+                                    </div>
                                 </div>
-                                <div className="flex-1 text-black dark:text-zinc-50">
-                                    {account.email || "-"}
-                                </div>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
-                                    전화번호
+                                <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                        전화번호
+                                    </div>
+                                    <div className="flex-1">
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={editForm.phone_number}
+                                                onChange={(e) =>
+                                                    setEditForm({ ...editForm, phone_number: e.target.value })
+                                                }
+                                                placeholder="전화번호"
+                                                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-black dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        ) : (
+                                            <div className="text-black dark:text-zinc-50">
+                                                {account.phone_number || "-"}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex-1 text-black dark:text-zinc-50">
-                                    {account.phone_number || "-"}
-                                </div>
-                            </div>
+
+                                {/* 편집 모드에서만 보이는 필드들 */}
+                                {isEditing && (
+                                    <>
+
+
+                                        <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                            <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                                목표 기간
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="number"
+                                                    value={editForm.target_period}
+                                                    onChange={(e) =>
+                                                        setEditForm({ ...editForm, target_period: e.target.value })
+                                                    }
+                                                    placeholder="목표 기간"
+                                                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-black dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                                            <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                                목표 금액
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="number"
+                                                    value={editForm.target_amount}
+                                                    onChange={(e) =>
+                                                        setEditForm({ ...editForm, target_amount: e.target.value })
+                                                    }
+                                                    placeholder="목표 금액"
+                                                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-black dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
                             <div className="flex flex-col sm:flex-row sm:items-center border-b border-zinc-200 dark:border-zinc-700 pb-4">
                                 <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
@@ -248,15 +446,16 @@ export default function MyPage() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row sm:items-center pb-4">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
-                                    최종 수정일
-                                </div>
-                                <div className="flex-1 text-black dark:text-zinc-50">
-                                    {new Date(account.updated_at).toLocaleString("ko-KR")}
+                                <div className="flex flex-col sm:flex-row sm:items-center pb-4">
+                                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 sm:w-32 mb-1 sm:mb-0">
+                                        최종 수정일
+                                    </div>
+                                    <div className="flex-1 text-black dark:text-zinc-50">
+                                        {new Date(account.updated_at).toLocaleString("ko-KR")}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>
