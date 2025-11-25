@@ -14,57 +14,125 @@ export default function Navbar() {
     };
 
     const handleDeparture = () => {
-        depart();
-        router.push("/");
+        if (confirm("정말 회원탈퇴를 하시겠습니까?")) {
+            depart();
+            router.push("/");
+        }
     };
 
     return (
-        <nav className="bg-gray-800 text-white p-4 flex justify-between">
-            <div className="text-lg font-bold">
-                <Link href="/">MyApp</Link>
-            </div>
+        <nav className="bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-lg">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16">
+                    {/* 로고 */}
+                    <div className="flex-shrink-0">
+                        <Link 
+                            href="/" 
+                            className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent hover:from-blue-300 hover:to-purple-300 transition-all duration-200"
+                        >
+                            MyApp
+                        </Link>
+                    </div>
 
-            <div className="space-x-4">
-                <Link href="/">Home</Link>
+                    {/* 네비게이션 링크 */}
+                    <div className="hidden md:flex items-center space-x-2">
+                        <Link 
+                            href="/" 
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-blue-600 hover:shadow-md transition-all duration-200 hover:scale-105"
+                        >
+                            🏠 Home
+                        </Link>
 
-                <Link href="/flow" className="hover:underline">
-                    Upload
-                </Link>
+                        <Link 
+                            href="/flow" 
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-blue-600 hover:shadow-md transition-all duration-200 hover:scale-105"
+                        >
+                            📤 Upload
+                        </Link>
 
-                <Link href="/assets_simulation" className="hover:underline">
-                    미래 자산 예측
-                </Link>
+                        <Link 
+                            href="/assets_simulation" 
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-purple-600 hover:shadow-md transition-all duration-200 hover:scale-105"
+                        >
+                            💰 미래 자산 예측
+                        </Link>
 
-                <Link href="/tax_credit" className="hover:underline">
-                    세액 공제 확인
-                </Link>
+                        <Link 
+                            href="/tax_credit" 
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-green-600 hover:shadow-md transition-all duration-200 hover:scale-105"
+                        >
+                            📋 세액 공제 확인
+                        </Link>
 
-                <Link href="/myPage">MyPage</Link>
-                {isLoggedIn ? (
-                    <button
-                        onClick={handleLogout}
-                        className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
+                        <Link 
+                            href="/myPage" 
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-indigo-600 hover:shadow-md transition-all duration-200 hover:scale-105"
+                        >
+                            👤 MyPage
+                        </Link>
+                    </div>
+
+                    {/* 인증 버튼 */}
+                    <div className="flex items-center space-x-2">
+                        {isLoggedIn ? (
+                            <>
+                                <button
+                                    onClick={handleDeparture}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium bg-red-800/80 hover:bg-red-900 hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                                >
+                                    🗑️ 탈퇴
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                                >
+                                    🚪 Logout
+                                </button>
+                            </>
+                        ) : (
+                            <Link
+                                href="/login"
+                                className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                            >
+                                🔐 Login
+                            </Link>
+                        )}
+                    </div>
+                </div>
+
+                {/* 모바일 메뉴 */}
+                <div className="md:hidden pb-4 space-y-2">
+                    <Link 
+                        href="/" 
+                        className="block px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-blue-600 transition-all duration-200"
                     >
-                        Logout
-                    </button>
-                ) : (
-                    <Link
-                        href="/login"
-                        className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-                    >
-                        Login
+                        🏠 Home
                     </Link>
-                )}
-                {isLoggedIn ? (
-                    <button
-                        onClick={handleDeparture}
-                        className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
+                    <Link 
+                        href="/flow" 
+                        className="block px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-blue-600 transition-all duration-200"
                     >
-                        Departure
-                    </button>
-                ) : (
-                    <></>
-                )}
+                        📤 Upload
+                    </Link>
+                    <Link 
+                        href="/assets_simulation" 
+                        className="block px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-purple-600 transition-all duration-200"
+                    >
+                        💰 미래 자산 예측
+                    </Link>
+                    <Link 
+                        href="/tax_credit" 
+                        className="block px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-green-600 transition-all duration-200"
+                    >
+                        📋 세액 공제 확인
+                    </Link>
+                    <Link 
+                        href="/myPage" 
+                        className="block px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/50 hover:bg-indigo-600 transition-all duration-200"
+                    >
+                        👤 MyPage
+                    </Link>
+                </div>
             </div>
         </nav>
     );
