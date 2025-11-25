@@ -14,10 +14,8 @@ export default function Navbar() {
     };
 
     const handleDeparture = () => {
-        if (confirm("정말 회원탈퇴를 하시겠습니까?")) {
-            depart();
-            router.push("/");
-        }
+        depart();
+        router.push("/");
     };
 
     return (
