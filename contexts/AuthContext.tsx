@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const depart = () => {
         console.log("[Auth] Departing (회원탈퇴)...");
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/authentication/departure`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/account/departure`, {
             method: "POST",
             credentials: "include", // 쿠키 포함 (session_id 전송)
         })
