@@ -1,14 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAnalyzeDocument } from "@/hooks/useAnalyzeDocument";
 import StepActions from "@/components/step/StepActions";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 
+// 쿠키 설정 헬퍼 함수
+function setCookie(name: string, value: string, days: number = 1) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+}
+
 export default function ExpensePage() {
     const router = useRouter();
     const { analyzeDocument, analyzeForm } = useAnalyzeDocument();
+
+    // 페이지 로드 시 기존 session_id를 쿠키로 복원
+    useEffect(() => {
+        const savedSessionId = localStorage.getItem("session_id");
+        if (savedSessionId) {
+            setCookie("session_id", savedSessionId, 1);
+            console.log("[DEBUG] Restored session_id to cookie:", savedSessionId);
+        }
+    }, []);
 
     // 기본 제공 필드
     const [defaultFields, setDefaultFields] = useState<Record<string, string>>({

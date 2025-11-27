@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 
+// 쿠키 설정 헬퍼 함수
+function setCookie(name: string, value: string, days: number = 1) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+}
+
 export function useAnalyzeDocument() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +36,16 @@ export function useAnalyzeDocument() {
                 throw new Error(d.detail || "분석 실패");
             }
 
-            return await res.json();
+            const result = await res.json();
+            
+            // session_id를 localStorage와 쿠키에 모두 저장
+            if (result.session_id) {
+                localStorage.setItem("session_id", result.session_id);
+                setCookie("session_id", result.session_id, 1);
+                console.log("[DEBUG] Session ID saved:", result.session_id);
+            }
+
+            return result;
         } catch (err: any) {
             setError(err.message);
             throw err;
@@ -58,7 +74,16 @@ export function useAnalyzeDocument() {
                 throw new Error(d.detail || d.message || "저장 실패");
             }
 
-            return await res.json();
+            const result = await res.json();
+            
+            // session_id를 localStorage와 쿠키에 모두 저장
+            if (result.session_id) {
+                localStorage.setItem("session_id", result.session_id);
+                setCookie("session_id", result.session_id, 1);
+                console.log("[DEBUG] Session ID saved:", result.session_id);
+            }
+
+            return result;
         } catch (err: any) {
             setError(err.message);
             throw err;
