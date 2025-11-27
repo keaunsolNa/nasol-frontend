@@ -15,11 +15,20 @@ export function useAnalyzeDocument() {
             form.append("file", file);
             form.append("type_of_doc", type);
 
+            // 쿠키에서 CSRF 토큰 읽기
+            const csrfToken = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("csrf_token="))
+            ?.split("=")[1];
+
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/documents-multi-agents/analyze`,
                 {
                     method: "POST",
                     credentials: "include",
+                    headers: {
+                    "X-CSRF-Token": csrfToken || "",
+                    },
                     body: form,
                 }
             );

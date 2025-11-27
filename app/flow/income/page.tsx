@@ -32,6 +32,16 @@ export default function IncomePage() {
         try {
             // 직접 입력 데이터를 백엔드 API로 전송
             if (inputMethod === "manual") {
+                // 빈 칸 확인
+                const emptyFields = Object.entries(fields)
+                    .filter(([_, value]) => !value.trim())
+                    .map(([key]) => key);
+
+                if (emptyFields.length > 0) {
+                    alert(`다음 항목을 모두 채워주세요: ${emptyFields.join(", ")}`);
+                    return;
+                }
+
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/documents-multi-agents/income`, {
                     credentials: "include",
                     method: 'POST',
