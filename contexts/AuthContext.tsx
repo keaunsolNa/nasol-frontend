@@ -37,9 +37,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = () => {
         console.log("[Auth] Logging out...");
+
+        // 쿠키에서 CSRF 토큰 읽기
+        const csrfToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("csrf_token="))
+        ?.split("=")[1];
+        console.log("[Auth] csrfToken is : ",csrfToken);
+
+
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/authentication/logout`, {
             method: "POST",
             credentials: "include",
+            headers: {
+            "X-CSRF-Token": csrfToken || "",  // 헤더에 CSRF 토큰 추가
+            },
         }).finally(() => {
             setIsLoggedIn(false);
         });
